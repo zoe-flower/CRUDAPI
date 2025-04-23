@@ -1,75 +1,43 @@
 public class TaskService
 {
-    private readonly List<TaskItem> _tasks = new List<TaskItem>();
-    public IReadOnlyList<TaskItem> Tasks => _tasks;
-    private readonly ILogger<TaskService> _logger;
-    public TaskService(ILogger<TaskService> logger)
+    private readonly TaskDatabase _taskDatabase;
+
+    public TaskService(TaskDatabase taskDatabase)
     {
-        _logger = logger;
+        _taskDatabase = taskDatabase;
     }
 
-    public List<TaskItem> CreateTask(TaskItem task)
+    public void Run()
     {
-        Guid id = Guid.NewGuid();
-        task.Id = id;
-        _tasks.Add(task);
-        _logger.LogInformation($"Task created with ID: {task.Id}");
-        return _tasks;
-    }
-
-    public TaskItem? ReadTask(Guid id)
-    {
-        _logger.LogInformation($"Searching for task with ID: {id} ...");
-        var task = _tasks.Find(t => t.Id == id);
-        if (task != null)
+        var newTask = new TaskItem
         {
-            _logger.LogInformation($"Task found: {task}");
-            return task;
-        } else {
-            _logger.LogWarning($"Task with ID {id} not found.");
-            return null;
-        } 
-    }
+            Title = "New Task",
+            Description = "This is a new task.",
+            IsCompleted = false,
+        };
 
-public List<TaskItem> UpdateTask(Guid id, TaskItem updatedTask)
-{
-    var task = _tasks.Find(task => task.Id == id);
-    if (task != null)
-    {
-        int index = _tasks.IndexOf(task);
-        _tasks[index] = updatedTask;
-        _logger.LogInformation($"Task updated to: {task};");
-    }
-    else
-    {
-        _logger.LogWarning($"Task with ID {id} not found.");
-    }
-    return _tasks;
-}
-
-
-    public List<TaskItem> DeleteTask(Guid id)
-    {
-        var taskToRemove = _tasks.FirstOrDefault(t => t.Id == id);
-
-        if (taskToRemove != null)
+        var newTask2 = new TaskItem
         {
-            _tasks.Remove(taskToRemove);
-            _logger.LogInformation($"Removing {taskToRemove.Id} from the Task List.");
-        } else  {
-            _logger.LogWarning($"Task with ID {id} not found.");
-        }
-       return _tasks;
-    }
+            Title = "New Task 2",
+            Description = "This is a new task 2.",
+            IsCompleted = false,
+        };
 
-    public List<TaskItem> GetAllTasks()
-    {
-        _logger.LogInformation("TASKS LIST:");
-        foreach (var task in _tasks)
+        _taskDatabase.CreateTask(newTask);
+        _taskDatabase.ReadTask(newTask.Id);
+        _taskDatabase.ReadTask(newTask2.Id);
+        _taskDatabase.CreateTask(newTask2);
+        _taskDatabase.ReadTask(newTask2.Id);
+        _taskDatabase.UpdateTask(newTask.Id, new TaskItem
         {
-            _logger.LogInformation($"{task}");
-        }
-        return _tasks;
+            Id = newTask.Id,
+            Title = "Updated Task",
+            Description = "This is an updated task.",
+            IsCompleted = true,
+        });
+        _taskDatabase.GetAllTasks();
+        _taskDatabase.DeleteTask(newTask.Id);
+        _taskDatabase.GetAllTasks();
     }
 }
 
@@ -78,8 +46,8 @@ public List<TaskItem> UpdateTask(Guid id, TaskItem updatedTask)
 // use a memory cache IMemoryCache - can configure hours to be alive
 // use cache in repository
 // think of how to cache request to db.
-// typically conroller calls service, calls caching layer, calls db. 
-// is in cache? yes, return. If no get from db and cache. configure timne in cache.Add()
-// Look at how I can alter cache time in IOptions. Create Json in app settinggs and create a model based of the json. configure that in program.cs
-// replace writeline with ILogger
+// typically controller calls service, calls caching layer, calls db. 
+// is in cache? yes, return. If no get from db and cache. configure time in cache.Add()
+// Look at how I can alter cache time in IOptions. Create Json in app settings and create a model based of the json. configure that in program.cs
+// replace write line with ILogger
 // make things async

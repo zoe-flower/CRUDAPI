@@ -5,6 +5,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<TaskService>();
+builder.Services.AddSingleton<TaskDatabase>();
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
@@ -15,33 +17,7 @@ if (app.Environment.IsDevelopment()) {
 }
 
 var taskService = app.Services.GetRequiredService<TaskService>(); //Added Required as GetService<T>() doesn't guarantee the service exists in the container and causes console warnings
-var newTask = new TaskItem {
-    Id = Guid.NewGuid(),
-    Title = "Sample Task",
-    Description = "This is a sample task.",
-    IsCompleted = false,
-};
-var newTask2 = new TaskItem {
-    Id = Guid.NewGuid(),
-    Title = "Sample Task 2",
-    Description = "This is a sample task 2.",
-    IsCompleted = false,
-};
-
-taskService.CreateTask(newTask);
-taskService.ReadTask(newTask.Id);
-taskService.ReadTask(newTask2.Id);
-taskService.CreateTask(newTask2);
-taskService.ReadTask(newTask2.Id);
-taskService.UpdateTask(newTask.Id, new TaskItem {
-    Id = newTask.Id,
-    Title = "Updated Task",
-    Description = "This is an updated task.",
-    IsCompleted = true,
-});
-taskService.GetAllTasks();
-taskService.DeleteTask(newTask.Id);
-taskService.GetAllTasks();
+taskService.Run(); // Call the Run method to execute the task service logic
 
 
 app.UseHttpsRedirection();
