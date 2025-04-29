@@ -41,13 +41,8 @@ public class TaskService
     }
 }
 
-
-// Separate into a task repository aka fake db
-// use a memory cache IMemoryCache - can configure hours to be alive
-// use cache in repository
-// think of how to cache request to db.
-// typically controller calls service, calls caching layer, calls db. 
-// is in cache? yes, return. If no get from db and cache. configure time in cache.Add()
-// Look at how I can alter cache time in IOptions. Create Json in app settings and create a model based of the json. configure that in program.cs
-// replace write line with ILogger
+// typically controller calls service, calls caching layer, calls db.
+// Look at how I can alter cache time in IOptions. 
+// Create Json in app settings and create a model based of the json. configure that in program.cs
 // make things async
+// gitignore file

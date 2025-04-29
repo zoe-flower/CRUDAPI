@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 
-
 [ApiController]
 [Route("api/tasks")]
 public class TaskController : ControllerBase {
@@ -9,7 +8,6 @@ public class TaskController : ControllerBase {
     public TaskController(TaskDatabase taskDatabase) {
         _taskDatabase = taskDatabase;
     }
-
 
     [HttpPost]
     public List<TaskItem> CreateTask(TaskItem task) {

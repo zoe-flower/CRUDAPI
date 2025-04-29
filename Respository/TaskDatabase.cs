@@ -6,6 +6,7 @@ public class TaskDatabase
     private readonly List<TaskItem> _tasks = new List<TaskItem>();
     private readonly ILogger<TaskService> _logger;
     private readonly IMemoryCache _cache;
+    
     public TaskDatabase(ILogger<TaskService> logger, IMemoryCache cache)
     {
         _cache = cache;
@@ -26,33 +27,40 @@ public class TaskDatabase
     public TaskItem? ReadTask(Guid id)
     {
         _logger.LogInformation($"Searching for task with ID: {id} ...");
-        var task = _tasks.Find(t => t.Id == id);
-        if (task != null)
-        {
-            _logger.LogInformation($"Task found: {task}");
-            return task;
-        } else {
-            _logger.LogWarning($"Task with ID {id} not found.");
-            return null;
-        } 
+        if (_cache.TryGetValue(id, out TaskItem cachedTask))
+            {
+                _logger.LogInformation($"Task found in cache: {cachedTask}");
+                return cachedTask;
+            } else {
+                _logger.LogWarning($"Task with ID {id} not found in cache. Fetching from 'db'...");
+                var task = _tasks.Find(t => t.Id == id);
+                if (task != null)
+                {
+                    _logger.LogInformation($"Task fetched from db: {task}");
+                    return task;
+                } else {
+                    _logger.LogWarning($"Task with ID {id} not found.");
+                    return null;
+                } 
+            }
     }
 
-public List<TaskItem> UpdateTask(Guid id, TaskItem updatedTask)
-{
-    var task = _tasks.Find(task => task.Id == id);
-    if (task != null)
+    public List<TaskItem> UpdateTask(Guid id, TaskItem updatedTask)
     {
-        int index = _tasks.IndexOf(task);
-        _tasks[index] = updatedTask;
-        _logger.LogInformation($"Task updated to: {task};");
-        _cache.Set(id, updatedTask, TimeSpan.FromMinutes(5));
+        var task = _tasks.Find(task => task.Id == id);
+        if (task != null)
+        {
+            int index = _tasks.IndexOf(task);
+            _tasks[index] = updatedTask;
+            _logger.LogInformation($"Task updated to: {task};");
+            _cache.Set(id, updatedTask, TimeSpan.FromMinutes(5));
+        }
+        else
+        {
+            _logger.LogWarning($"Task with ID {id} not found.");
+        }
+        return _tasks;
     }
-    else
-    {
-        _logger.LogWarning($"Task with ID {id} not found.");
-    }
-    return _tasks;
-}
 
 
     public List<TaskItem> DeleteTask(Guid id)
@@ -71,14 +79,23 @@ public List<TaskItem> UpdateTask(Guid id, TaskItem updatedTask)
     }
 
     public List<TaskItem> GetAllTasks()
-        {
-        _logger.LogInformation("TASKS LIST:");
+    {
+        List<TaskItem> result = new List<TaskItem>();
         foreach (var task in _tasks)
         {
-            _logger.LogInformation($"{task}");
+            if (_cache.TryGetValue(task.Id, out TaskItem cachedTask))
+            {
+                _logger.LogInformation($"Task found in cache: {cachedTask}");
+                result.Add(cachedTask);
+            }
+            else
+            {
+                _logger.LogInformation($"Task with ID {task.Id} not found in cache. Fetching from 'db'...");
+                _cache.Set(task.Id, task, TimeSpan.FromMinutes(5));
+                _logger.LogInformation($"Task fetched from db: {task}");
+                result.Add(task);
+            }
         }
-        _cache.Set("tasks", _tasks, TimeSpan.FromMinutes(5));
-        
-        return _tasks;
+        return result;
     }
 }
