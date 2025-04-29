@@ -27,15 +27,22 @@ public class TaskDatabase
     public TaskItem? ReadTask(Guid id)
     {
         _logger.LogInformation($"Searching for task with ID: {id} ...");
-        var task = _tasks.Find(t => t.Id == id);
-        if (task != null)
-        {
-            _logger.LogInformation($"Task found: {task}");
-            return task;
-        } else {
-            _logger.LogWarning($"Task with ID {id} not found.");
-            return null;
-        } 
+        if (_cache.TryGetValue(id, out TaskItem cachedTask))
+            {
+                _logger.LogInformation($"Task found in cache: {cachedTask}");
+                return cachedTask;
+            } else {
+                _logger.LogWarning($"Task with ID {id} not found in cache. Fetching from 'db'...");
+                var task = _tasks.Find(t => t.Id == id);
+                if (task != null)
+                {
+                    _logger.LogInformation($"Task fetched from db: {task}");
+                    return task;
+                } else {
+                    _logger.LogWarning($"Task with ID {id} not found.");
+                    return null;
+                } 
+            }
     }
 
     public List<TaskItem> UpdateTask(Guid id, TaskItem updatedTask)
@@ -78,13 +85,14 @@ public class TaskDatabase
         {
             if (_cache.TryGetValue(task.Id, out TaskItem cachedTask))
             {
-                _logger.LogInformation($"Task {task.Id} retrieved from cache.");
+                _logger.LogInformation($"Task found in cache: {cachedTask}");
                 result.Add(cachedTask);
             }
             else
             {
-                _logger.LogInformation($"Task {task.Id} not found in cache. Fetching from 'db'.");
+                _logger.LogInformation($"Task with ID {task.Id} not found in cache. Fetching from 'db'...");
                 _cache.Set(task.Id, task, TimeSpan.FromMinutes(5));
+                _logger.LogInformation($"Task fetched from db: {task}");
                 result.Add(task);
             }
         }
